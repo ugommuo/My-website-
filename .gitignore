@@ -1,0 +1,6 @@
+main
+main.py
+python_output.log
+ngrok*
+storage/
+.config/
