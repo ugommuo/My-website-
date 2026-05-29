@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AuraConnect Portal</title>
+    <style>
+        body {
+            background-color: #0d1117;
+            color: #c9d1d9;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+        .card {
+            background-color: #161b22;
+            border: 1px solid #30363d;
+            border-radius: 12px;
+            padding: 24px;
+            width: 100%;
+            max-width: 400px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+        }
+        h2 {
+            color: #58a6ff;
+            margin-top: 0;
+            text-align: center;
+            font-size: 24px;
+            letter-spacing: 0.5px;
+        }
+        .subtitle {
+            text-align: center;
+            color: #8b949e;
+            font-size: 14px;
+            margin-top: -10px;
+            margin-bottom: 25px;
+        }
+        .input-group {
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            color: #f0f6fc;
+        }
+        input[type="text"] {
+            width: 100%;
+            padding: 12px;
+            background-color: #0d1117;
+            border: 1px solid #30363d;
+            border-radius: 6px;
+            color: #f0f6fc;
+            font-size: 14px;
+            box-sizing: border-box;
+            transition: border-color 0.2s;
+        }
+        input[type="text"]:focus {
+            border-color: #58a6ff;
+            outline: none;
+        }
+        button {
+            width: 100%;
+            padding: 14px;
+            background-color: #238636;
+            color: #ffffff;
+            border: none;
+            border-radius: 6px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        button:hover {
+            background-color: #2ea44f;
+        }
+        .status-box {
+            margin-top: 20px;
+            padding: 12px;
+            background-color: #21262d;
+            border-radius: 6px;
+            border: 1px solid #30363d;
+            text-align: center;
+            font-size: 14px;
+        }
+        .status-waiting { color: #8b949e; }
+        .status-routing { color: #e3b341; }
+        .status-success { color: #3fb950; font-weight: bold; }
+        .status-failed { color: #f85149; font-weight: bold; }
+    </style>
+</head>
+<body>
+
+<div class="card">
+    <h2>AuraConnect</h2>
+    <div class="subtitle">Network Flywheel Interface</div>
+    
+    <div class="input-group">
+        <label for="backendUrl">Active Ngrok Backend URL</label>
+        <input type="text" id="backendUrl" placeholder="https://xxxx.ngrok-free.app">
+    </div>
+    
+    <button id="dispatchBtn" onclick="dispatchSignal()">Dispatch Request</button>
+    
+    <div class="status-box" id="statusMessage">
+        Status: <span class="status-waiting">Awaiting Dispatch</span>
+    </div>
+</div>
+
+<script>
+    // Automatically grab last saved URL from phone storage if it exists
+    document.getElementById('backendUrl').value = localStorage.getItem('savedNgrokUrl') || '';
+
+    async function dispatchSignal() {
+        const urlInput = document.getElementById('backendUrl').value.trim();
+        const statusSpan = document.getElementById('statusMessage');
+        
+        if (!urlInput) {
+            statusSpan.innerHTML = 'Status: <span class="status-failed">Please enter a URL!</span>';
+            return;
+        }
+        
+        // Save URL locally so user doesn't have to retype it every refresh
+        localStorage.setItem('savedNgrokUrl', urlInput);
+        
+        statusSpan.innerHTML = 'Status: <span class="status-routing">Routing Flywheel Signal...</span>';
+        
+        try {
+            const cleanUrl = urlInput.endsWith('/') ? urlInput : urlInput + '/';
+            const response = await fetch(cleanUrl + 'api/signal', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ 
+                    client: 'AuraConnect Portal',
+                    timestamp: new Date().toISOString(),
+                    status: 'active'
+                })
+            });
+            
+            if (response.ok) {
+                statusSpan.innerHTML = 'Status: <span class="status-success">Success (Signal Tunneled!)</span>';
+            } else {
+                statusSpan.innerHTML = 'Status: <span class="status-failed">Routing Failed (Server Error)</span>';
+            }
+        } catch (error) {
+            console.error(error);
+            statusSpan.innerHTML = 'Status: <span class="status-failed">Routing Failed (Connection Refused)</span>';
+        }
+    }
+</script>
+
+</body>
+</html>
